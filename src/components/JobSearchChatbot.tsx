@@ -51,44 +51,52 @@ const hf = new HfInference(import.meta.env.VITE_HUGGINGFACE_API_KEY);
 
 // Simulated job data fetching function
 const fetchJobs = async (page: number, query: string = ""): Promise<Job[]> => {
-  try {
-    const jobs = await allJobs(query);
-    return jobs.slice((page - 1) * 10, page * 10);
-  } catch (error) {
-    console.error("Error fetching jobs:", error);
-    throw error;
-  }
-};
+  // In a real application, this would be an API call
+  await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate network delay
 
-const allJobs = async (
-  query: string,
-  location: string = "remote",
-): Promise<Job[]> => {
-  try {
-    const response = await axios.get(ADZUNA_API_URL, {
-      params: {
-        app_id: ADZUNA_APP_ID,
-        app_key: ADZUNA_API_KEY,
-        results_per_page: 10,
-        what: query,
-        where: location,
-      },
-    });
+  const allJobs = async (
+    query: string,
+    location: string = "remote",
+  ): Promise<Job[]> => {
+    try {
+      const response = await axios.get(ADZUNA_API_URL, {
+        params: {
+          app_id: ADZUNA_APP_ID,
+          app_key: ADZUNA_API_KEY,
+          results_per_page: 10,
+          what: query,
+          where: location,
+          // content_type: "application/json",
+        },
+      });
 
-    return response.data.results.map((job: any) => ({
-      id: job.id,
-      title: job.title,
-      company: job.company.display_name,
-      location: job.location.display_name,
-      description: job.description,
-      url: job.redirect_url,
-      salary_min: job.salary_min,
-      salary_max: job.salary_max,
-    }));
-  } catch (error) {
-    console.error("Error fetching jobs from Adzuna API:", error);
-    throw error;
-  }
+      return response.data.results.map((job: any) => ({
+        id: job.id,
+        title: job.title,
+        company: job.company.display_name,
+        location: job.location.display_name,
+        description: job.description,
+        url: job.redirect_url,
+        salary_min: job.salary_min,
+        salary_max: job.salary_max,
+      }));
+    } catch (error) {
+      console.error("Error fetching jobs from Adzuna API:", error);
+      throw error;
+    }
+  };
+
+  const filteredJobs = query
+    ? allJobs.filter(
+        (job) =>
+          job.title.toLowerCase().includes(query.toLowerCase()) ||
+          job.company.toLowerCase().includes(query.toLowerCase()) ||
+          job.location.toLowerCase().includes(query.toLowerCase()) ||
+          job.description.toLowerCase().includes(query.toLowerCase()),
+      )
+    : allJobs;
+
+  return filteredJobs.slice((page - 1) * 10, page * 10);
 };
 
 export default function EnhancedJobSearch() {
@@ -107,19 +115,6 @@ export default function EnhancedJobSearch() {
   const [error, setError] = useState<string | null>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const observer = useRef<IntersectionObserver | null>(null);
-
-
-  const handleChatSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const form = e.currentTarget;
-    const input = form.elements.namedItem("message") as HTMLInputElement;
-    const userMessage = input.value.trim();
-
-    if (userMessage) {
-      setSearchTerm(userMessage);
-      input.value = "";
-    }
-  };
 
   const lastJobElementRef = useCallback(
     (node: HTMLDivElement | null) => {
@@ -154,35 +149,16 @@ export default function EnhancedJobSearch() {
   useEffect(() => {
     setLoading(true);
     setError(null);
-    setJobs([]); // Reset jobs when search term changes
-    setPage(1); // Reset page when search term changes
-    fetchJobs(1, searchTerm)
+    fetchJobs(page, searchTerm)
       .then((newJobs) => {
-        setJobs(newJobs);
-        setHasMore(newJobs.length === 10);
+        setJobs((prevJobs) => [...prevJobs, ...newJobs]);
+        setHasMore(newJobs.length > 0);
         setLoading(false);
       })
       .catch(() => {
         setError("Error fetching jobs. Please try again.");
         setLoading(false);
       });
-  }, [searchTerm]);
-
-  useEffect(() => {
-    if (page > 1) {
-      setLoading(true);
-      setError(null);
-      fetchJobs(page, searchTerm)
-        .then((newJobs) => {
-          setJobs((prevJobs) => [...prevJobs, ...newJobs]);
-          setHasMore(newJobs.length === 10);
-          setLoading(false);
-        })
-        .catch(() => {
-          setError("Error fetching more jobs. Please try again.");
-          setLoading(false);
-        });
-    }
   }, [page, searchTerm]);
 
   useEffect(() => {
@@ -194,10 +170,13 @@ export default function EnhancedJobSearch() {
 
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (searchTerm) {
+      fetchJobs(searchTerm);
+    }
+
     setJobs([]);
     setPage(1);
     setHasMore(true);
-    // The searchTerm update will trigger the useEffect to fetch new jobs
   };
 
   const analyzeResumeAndUpdateJobs = async (resumeText: string) => {
@@ -446,11 +425,7 @@ export default function EnhancedJobSearch() {
                     </div>
                     <div className="flex items-center text-gray-600">
                       <DollarSign className="w-5 h-5 mr-2" />
-                      <span>
-                        {job.salary_min && job.salary_max
-                          ? `$${job.salary_min.toLocaleString()} - $${job.salary_max.toLocaleString()}`
-                          : 'Salary not specified'}
-                      </span>
+                      <span>{job.salary}</span>
                     </div>
                     <p className="mt-2 text-gray-700">{job.description}</p>
                   </div>
