@@ -140,16 +140,13 @@ export default function EnhancedJobSearch() {
 
   useEffect(() => {
     const fetchJobsData = async () => {
+      if (loading) return;
       setLoading(true);
       setError(null);
       try {
         const newJobs = await fetchJobs(page, searchTerm);
-        if (page === 1) {
-          setJobs(newJobs);
-        } else {
-          setJobs((prevJobs) => [...prevJobs, ...newJobs]);
-        }
-        setHasMore(newJobs.length === 10);
+        setJobs((prevJobs) => [...prevJobs, ...newJobs]);
+        setHasMore(newJobs.length > 0);
       } catch (err) {
         setError("Error fetching jobs. Please try again.");
       } finally {
@@ -158,7 +155,7 @@ export default function EnhancedJobSearch() {
     };
 
     fetchJobsData();
-  }, [page, searchTerm]);
+  }, [page, searchTerm, loading]);
 
   useEffect(() => {
     if (chatContainerRef.current) {
@@ -169,12 +166,15 @@ export default function EnhancedJobSearch() {
 
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setJobs([]);
-    setPage(1);
-    setHasMore(true);
     const form = e.target as HTMLFormElement;
     const input = form.elements.namedItem("searchInput") as HTMLInputElement;
-    setSearchTerm(input.value);
+    const newSearchTerm = input.value;
+    if (newSearchTerm !== searchTerm) {
+      setJobs([]);
+      setPage(1);
+      setHasMore(true);
+      setSearchTerm(newSearchTerm);
+    }
   };
 
   const analyzeResumeAndUpdateJobs = async (resumeText: string) => {
