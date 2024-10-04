@@ -144,11 +144,13 @@ export default function EnhancedJobSearch() {
       setError(null);
       try {
         const newJobs = await fetchJobs(page, searchTerm);
-        if (page === 1) {
-          setJobs(newJobs);
-        } else {
-          setJobs((prevJobs) => [...prevJobs, ...newJobs]);
-        }
+        setJobs((prevJobs) => {
+          if (page === 1) {
+            return newJobs;
+          } else {
+            return [...prevJobs, ...newJobs];
+          }
+        });
         setHasMore(newJobs.length === 10);
       } catch (err) {
         setError("Error fetching jobs. Please try again.");
@@ -635,8 +637,15 @@ export default function EnhancedJobSearch() {
                 </CardFooter>
               </Card>
             ))}
-            {loading && <p>Loading more jobs...</p>}
-            {error && <p className="text-red-500">{error}</p>}
+            {loading && <p className="text-center">Loading more jobs...</p>}
+            {error && <p className="text-center text-red-500">{error}</p>}
+            {!loading && hasMore && (
+              <div className="text-center mt-4">
+                <Button onClick={() => setPage((prevPage) => prevPage + 1)}>
+                  Load More Jobs
+                </Button>
+              </div>
+            )}
           </div>
         </TabsContent>
         <TabsContent value="chat">
