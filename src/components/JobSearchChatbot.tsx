@@ -63,17 +63,17 @@ const fetchJobs = async (page: number, query: string = ""): Promise<Job[]> => {
 const allJobs = async (
   query: string,
   location: string = "remote",
-  page: number = 1
+  page?: number = 1,
 ): Promise<Job[]> => {
   try {
     const response = await axios.get(ADZUNA_API_URL, {
       params: {
         app_id: ADZUNA_APP_ID,
         app_key: ADZUNA_API_KEY,
-        results_per_page: 10,
+        // results_per_page: 10,
         what: query,
         where: location,
-        page: page,
+        // page: page,
       },
     });
 
@@ -110,20 +110,6 @@ export default function EnhancedJobSearch() {
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const observer = useRef<IntersectionObserver | null>(null);
 
-  const lastJobElementRef = useCallback(
-    (node: HTMLDivElement | null) => {
-      if (loading) return;
-      if (observer.current) observer.current.disconnect();
-      observer.current = new IntersectionObserver((entries) => {
-        if (entries[0].isIntersecting && hasMore) {
-          loadMoreJobs();
-        }
-      });
-      if (node) observer.current.observe(node);
-    },
-    [loading, hasMore, loadMoreJobs],
-  );
-
   useEffect(() => {
     const loadModel = async () => {
       try {
@@ -146,7 +132,7 @@ export default function EnhancedJobSearch() {
       setError(null);
       try {
         const newJobs = await fetchJobs(page, searchTerm);
-        setJobs(prevJobs => [...prevJobs, ...newJobs]);
+        setJobs((prevJobs) => [...prevJobs, ...newJobs]);
         setHasMore(newJobs.length === 10);
       } catch (err) {
         setError("Error fetching jobs. Please try again.");
@@ -174,9 +160,23 @@ export default function EnhancedJobSearch() {
 
   const loadMoreJobs = () => {
     if (!loading && hasMore) {
-      setPage(prevPage => prevPage + 1);
+      setPage((prevPage) => prevPage + 1);
     }
   };
+
+  const lastJobElementRef = useCallback(
+    (node: HTMLDivElement | null) => {
+      if (loading) return;
+      if (observer.current) observer.current.disconnect();
+      observer.current = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting && hasMore) {
+          loadMoreJobs();
+        }
+      });
+      if (node) observer.current.observe(node);
+    },
+    [loading, hasMore, loadMoreJobs],
+  );
 
   const analyzeResumeAndUpdateJobs = async (resumeText: string) => {
     if (!model) {
@@ -590,10 +590,7 @@ export default function EnhancedJobSearch() {
                 name="searchInput"
                 placeholder="Search jobs..."
                 value={searchTerm}
-                onChange={(e) => {
-                  setSearchTerm(e.target.value);
-                  setPage(1);
-                }}
+                onChange={() => handleSearch(searchTerm)}
                 className="pl-10 pr-4 py-2 w-full"
               />
             </div>
