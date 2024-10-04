@@ -53,7 +53,7 @@ const hf = new HfInference(import.meta.env.VITE_HUGGINGFACE_API_KEY);
 const fetchJobs = async (page: number, query: string = ""): Promise<Job[]> => {
   try {
     const jobs = await allJobs(query);
-    return jobs.slice((page - 1) * 10, page * 10);
+    return jobs;
   } catch (error) {
     console.error("Error fetching jobs:", error);
     throw error;
@@ -143,15 +143,9 @@ export default function EnhancedJobSearch() {
       setLoading(true);
       setError(null);
       try {
-        const newJobs = await fetchJobs(page, searchTerm);
-        setJobs((prevJobs) => {
-          if (page === 1) {
-            return newJobs;
-          } else {
-            return [...prevJobs, ...newJobs];
-          }
-        });
-        setHasMore(newJobs.length === 10);
+        const allJobs = await fetchJobs(1, searchTerm);
+        setJobs(allJobs);
+        setHasMore(allJobs.length > page * 10);
       } catch (err) {
         setError("Error fetching jobs. Please try again.");
       } finally {
@@ -160,7 +154,7 @@ export default function EnhancedJobSearch() {
     };
 
     fetchJobsData();
-  }, [page, searchTerm]);
+  }, [searchTerm]);
 
   useEffect(() => {
     if (chatContainerRef.current) {
@@ -169,14 +163,11 @@ export default function EnhancedJobSearch() {
     }
   }, [messages]);
 
-  const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const handleSearch = (value: string) => {
     setJobs([]);
     setPage(1);
     setHasMore(true);
-    const form = e.target as HTMLFormElement;
-    const input = form.elements.namedItem("searchInput") as HTMLInputElement;
-    setSearchTerm(input.value);
+    setSearchTerm(value);
   };
 
   const analyzeResumeAndUpdateJobs = async (resumeText: string) => {
@@ -583,23 +574,27 @@ export default function EnhancedJobSearch() {
           <TabsTrigger value="chat">Resume Chatbot</TabsTrigger>
         </TabsList>
         <TabsContent value="jobs">
-          <form onSubmit={handleSearch} className="mb-6">
+          <div className="mb-6">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               <Input
                 type="text"
                 name="searchInput"
                 placeholder="Search jobs..."
-                defaultValue={searchTerm}
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setPage(1);
+                }}
                 className="pl-10 pr-4 py-2 w-full"
               />
             </div>
-          </form>
+          </div>
           <div className="space-y-6">
-            {jobs.map((job, index) => (
+            {jobs.slice(0, page * 10).map((job, index) => (
               <Card
                 key={job.id}
-                ref={index === jobs.length - 1 ? lastJobElementRef : null}
+                ref={index === page * 10 - 1 ? lastJobElementRef : null}
               >
                 <CardHeader>
                   <CardTitle className="text-xl font-semibold">
