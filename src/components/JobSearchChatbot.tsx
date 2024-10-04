@@ -52,7 +52,7 @@ const hf = new HfInference(import.meta.env.VITE_HUGGINGFACE_API_KEY);
 // Simulated job data fetching function
 const fetchJobs = async (page: number, query: string = ""): Promise<Job[]> => {
   try {
-    const jobs = await allJobs(query);
+    const jobs = await allJobs(query, "remote", page);
     return jobs;
   } catch (error) {
     console.error("Error fetching jobs:", error);
@@ -63,6 +63,7 @@ const fetchJobs = async (page: number, query: string = ""): Promise<Job[]> => {
 const allJobs = async (
   query: string,
   location: string = "remote",
+  page: number = 1
 ): Promise<Job[]> => {
   try {
     const response = await axios.get(ADZUNA_API_URL, {
@@ -72,6 +73,7 @@ const allJobs = async (
         results_per_page: 10,
         what: query,
         where: location,
+        page: page,
       },
     });
 
@@ -114,12 +116,12 @@ export default function EnhancedJobSearch() {
       if (observer.current) observer.current.disconnect();
       observer.current = new IntersectionObserver((entries) => {
         if (entries[0].isIntersecting && hasMore) {
-          setPage((prevPage) => prevPage + 1);
+          loadMoreJobs();
         }
       });
       if (node) observer.current.observe(node);
     },
-    [loading, hasMore],
+    [loading, hasMore, loadMoreJobs],
   );
 
   useEffect(() => {
@@ -143,9 +145,9 @@ export default function EnhancedJobSearch() {
       setLoading(true);
       setError(null);
       try {
-        const allJobs = await fetchJobs(1, searchTerm);
-        setJobs(allJobs);
-        setHasMore(allJobs.length > page * 10);
+        const newJobs = await fetchJobs(page, searchTerm);
+        setJobs(prevJobs => [...prevJobs, ...newJobs]);
+        setHasMore(newJobs.length === 10);
       } catch (err) {
         setError("Error fetching jobs. Please try again.");
       } finally {
@@ -154,7 +156,7 @@ export default function EnhancedJobSearch() {
     };
 
     fetchJobsData();
-  }, [searchTerm]);
+  }, [searchTerm, page]);
 
   useEffect(() => {
     if (chatContainerRef.current) {
@@ -168,6 +170,12 @@ export default function EnhancedJobSearch() {
     setPage(1);
     setHasMore(true);
     setSearchTerm(value);
+  };
+
+  const loadMoreJobs = () => {
+    if (!loading && hasMore) {
+      setPage(prevPage => prevPage + 1);
+    }
   };
 
   const analyzeResumeAndUpdateJobs = async (resumeText: string) => {
@@ -591,10 +599,10 @@ export default function EnhancedJobSearch() {
             </div>
           </div>
           <div className="space-y-6">
-            {jobs.slice(0, page * 10).map((job, index) => (
+            {jobs.map((job, index) => (
               <Card
                 key={job.id}
-                ref={index === page * 10 - 1 ? lastJobElementRef : null}
+                ref={index === jobs.length - 1 ? lastJobElementRef : null}
               >
                 <CardHeader>
                   <CardTitle className="text-xl font-semibold">
@@ -634,13 +642,6 @@ export default function EnhancedJobSearch() {
             ))}
             {loading && <p className="text-center">Loading more jobs...</p>}
             {error && <p className="text-center text-red-500">{error}</p>}
-            {!loading && hasMore && (
-              <div className="text-center mt-4">
-                <Button onClick={() => setPage((prevPage) => prevPage + 1)}>
-                  Load More Jobs
-                </Button>
-              </div>
-            )}
           </div>
         </TabsContent>
         <TabsContent value="chat">
