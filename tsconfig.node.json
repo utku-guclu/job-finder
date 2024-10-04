@@ -10,7 +10,7 @@
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "noEmit": true, // Allow emitting files
+    "noEmit": false, // Set to false to allow emitting files
     "jsx": "react-jsx",
 
     "allowImportingTsExtensions": true,
