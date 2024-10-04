@@ -626,7 +626,12 @@ export default function EnhancedJobSearch() {
                   </div>
                 </CardContent>
                 <CardFooter>
-                  <Button className="w-full">Apply Now</Button>
+                  <Button
+                    onClick={() => window.open(job.url, "_blank")}
+                    className="w-full"
+                  >
+                    Apply Now
+                  </Button>
                 </CardFooter>
               </Card>
             ))}
