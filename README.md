@@ -13,8 +13,8 @@ A web application that provides personalized job search advice based on user res
 - **Frontend**: React, TypeScript, Material-UI
 - **Backend**: Node.js (Express)
 - **Machine Learning**: TensorFlow.js
-- **Deployment**: [Your deployment platform, e.g., Vercel, Heroku]
-
+- **Deployment**: Vercel
+  
 ## Installation
 
 1. Clone the repository:
