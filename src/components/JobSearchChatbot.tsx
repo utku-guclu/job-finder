@@ -139,37 +139,25 @@ export default function EnhancedJobSearch() {
   }, []);
 
   useEffect(() => {
-    setLoading(true);
-    setError(null);
-    setJobs([]); // Reset jobs when search term changes
-    setPage(1); // Reset page when search term changes
-    fetchJobs(1, searchTerm)
-      .then((newJobs) => {
-        setJobs(newJobs);
-        setHasMore(newJobs.length === 10);
-        setLoading(false);
-      })
-      .catch(() => {
-        setError("Error fetching jobs. Please try again.");
-        setLoading(false);
-      });
-  }, [searchTerm]);
-
-  useEffect(() => {
-    if (page > 1) {
+    const fetchJobsData = async () => {
       setLoading(true);
       setError(null);
-      fetchJobs(page, searchTerm)
-        .then((newJobs) => {
+      try {
+        const newJobs = await fetchJobs(page, searchTerm);
+        if (page === 1) {
+          setJobs(newJobs);
+        } else {
           setJobs((prevJobs) => [...prevJobs, ...newJobs]);
-          setHasMore(newJobs.length === 10);
-          setLoading(false);
-        })
-        .catch(() => {
-          setError("Error fetching more jobs. Please try again.");
-          setLoading(false);
-        });
-    }
+        }
+        setHasMore(newJobs.length === 10);
+      } catch (err) {
+        setError("Error fetching jobs. Please try again.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchJobsData();
   }, [page, searchTerm]);
 
   useEffect(() => {
@@ -184,7 +172,9 @@ export default function EnhancedJobSearch() {
     setJobs([]);
     setPage(1);
     setHasMore(true);
-    // The searchTerm update will trigger the useEffect to fetch new jobs
+    const form = e.target as HTMLFormElement;
+    const input = form.elements.namedItem("searchInput") as HTMLInputElement;
+    setSearchTerm(input.value);
   };
 
   const analyzeResumeAndUpdateJobs = async (resumeText: string) => {
@@ -403,9 +393,9 @@ export default function EnhancedJobSearch() {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               <Input
                 type="text"
+                name="searchInput"
                 placeholder="Search jobs..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                defaultValue={searchTerm}
                 className="pl-10 pr-4 py-2 w-full"
               />
             </div>
