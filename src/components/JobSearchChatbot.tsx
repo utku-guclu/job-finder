@@ -69,7 +69,7 @@ const allJobs = async (
       params: {
         app_id: ADZUNA_APP_ID,
         app_key: ADZUNA_API_KEY,
-        results_per_page: 5,
+        results_per_page: 10,
         what: query,
         where: location,
       },
@@ -140,13 +140,16 @@ export default function EnhancedJobSearch() {
 
   useEffect(() => {
     const fetchJobsData = async () => {
-      if (loading) return;
       setLoading(true);
       setError(null);
       try {
         const newJobs = await fetchJobs(page, searchTerm);
-        setJobs((prevJobs) => [...prevJobs, ...newJobs]);
-        setHasMore(newJobs.length > 0);
+        if (page === 1) {
+          setJobs(newJobs);
+        } else {
+          setJobs((prevJobs) => [...prevJobs, ...newJobs]);
+        }
+        setHasMore(newJobs.length === 10);
       } catch (err) {
         setError("Error fetching jobs. Please try again.");
       } finally {
@@ -155,7 +158,7 @@ export default function EnhancedJobSearch() {
     };
 
     fetchJobsData();
-  }, [page, searchTerm, loading]);
+  }, [page, searchTerm]);
 
   useEffect(() => {
     if (chatContainerRef.current) {
@@ -166,15 +169,12 @@ export default function EnhancedJobSearch() {
 
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setJobs([]);
+    setPage(1);
+    setHasMore(true);
     const form = e.target as HTMLFormElement;
     const input = form.elements.namedItem("searchInput") as HTMLInputElement;
-    const newSearchTerm = input.value;
-    if (newSearchTerm !== searchTerm) {
-      setJobs([]);
-      setPage(1);
-      setHasMore(true);
-      setSearchTerm(newSearchTerm);
-    }
+    setSearchTerm(input.value);
   };
 
   const analyzeResumeAndUpdateJobs = async (resumeText: string) => {
