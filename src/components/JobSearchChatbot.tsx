@@ -69,7 +69,7 @@ const allJobs = async (
       params: {
         app_id: ADZUNA_APP_ID,
         app_key: ADZUNA_API_KEY,
-        results_per_page: 10,
+        results_per_page: 5,
         what: query,
         where: location,
       },
