@@ -10,10 +10,20 @@ A web application that provides personalized job search advice based on user res
 
 ## Technologies Used
 
-- **Frontend**: React, TypeScript, Material-UI
-- **Backend**: Node.js (Express)
-- **Machine Learning**: TensorFlow.js
-- **Deployment**: Vercel
+- **Frontend**: 
+  - **React**: A JavaScript library for building user interfaces, allowing for a component-based architecture.
+  - **TypeScript**: A superset of JavaScript that adds static types, helping to catch errors early and improve code maintainability.
+  - **Material-UI**: A popular React UI framework that provides pre-designed components for building responsive and aesthetically pleasing interfaces.
+
+- **Backend**: 
+  - **API**: The application uses a RESTful API to handle data communication between the frontend and the machine learning models.
+
+- **Machine Learning**: 
+  - **TensorFlow.js**: A JavaScript library for training and deploying machine learning models in the browser and on Node.js. It utilizes the Universal Sentence Encoder for embedding user input and matching it against job descriptions.
+
+- **Deployment**: 
+  - **Vercel**: A cloud platform for static sites and Serverless Functions, providing seamless deployment and hosting for the application.
+
   
 ## Installation
 
