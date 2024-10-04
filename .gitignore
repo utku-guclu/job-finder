@@ -24,3 +24,13 @@ dist-ssr
 *.sw?
 *.env
 .aider*
+
+# Ignore TypeScript declaration files
+*.d.ts
+
+# Ignore JavaScript files
+*.js
+
+# Ignore TypeScript build info files
+*.tsbuildinfo
+

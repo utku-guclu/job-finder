@@ -50,9 +50,9 @@ interface Message {
 const hf = new HfInference(import.meta.env.VITE_HUGGINGFACE_API_KEY);
 
 // Simulated job data fetching function
-const fetchJobs = async (page: number, query: string = ""): Promise<Job[]> => {
+const fetchJobs = async (query: string = ""): Promise<Job[]> => {
   try {
-    const jobs = await allJobs(query, "remote", page);
+    const jobs = await allJobs(query, "remote");
     return jobs;
   } catch (error) {
     console.error("Error fetching jobs:", error);
@@ -63,7 +63,7 @@ const fetchJobs = async (page: number, query: string = ""): Promise<Job[]> => {
 const allJobs = async (
   query: string,
   location: string = "remote",
-  page?: number = 1,
+  // page?: number = 1,
 ): Promise<Job[]> => {
   try {
     const response = await axios.get(ADZUNA_API_URL, {
@@ -131,7 +131,7 @@ export default function EnhancedJobSearch() {
       setLoading(true);
       setError(null);
       try {
-        const newJobs = await fetchJobs(page, searchTerm);
+        const newJobs = await fetchJobs(searchTerm);
         setJobs((prevJobs) => [...prevJobs, ...newJobs]);
         setHasMore(newJobs.length === 10);
       } catch (err) {
