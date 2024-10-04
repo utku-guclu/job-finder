@@ -10,10 +10,10 @@
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "noEmit": false, // Set to false to allow emitting files
+    "noEmit": false, // Allow emitting files
     "jsx": "react-jsx",
 
-    "allowImportingTsExtensions": true,
+    "allowImportingTsExtensions": true, // Keep this as is
     /* Composite setting for project references */
     "composite": true, // Ensure this is set to true
 
