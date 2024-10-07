@@ -1,6 +1,7 @@
+// src/utils/pdfToText.ts
 import { getDocument, GlobalWorkerOptions, version } from "pdfjs-dist";
 
-// Set the worker source to allow PDF.js to work properly
+// Set the worker source
 GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${version}/pdf.worker.min.js`;
 
 export async function pdfToText(file: File) {
