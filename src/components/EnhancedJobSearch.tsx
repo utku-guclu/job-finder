@@ -13,58 +13,59 @@ import ChatInterface from "./ChatInterface";
 import ResumeUpload from "./ResumeUpload";
 import { Message } from "../types";
 
+import { convertPdfToText } from "@/utils/pdfToText"; // Make sure to import this
+
 const EnhancedJobSearch: React.FC = () => {
   // Chat-related state
   const [messages, setMessages] = useState<Message[]>([]);
   const [resumeEmbedding, setResumeEmbedding] = useState<any>(null);
-  const [resumeText, setResumeText] = useState<string>("");
+  const [, setResumeText] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const { model } = useTensorFlowModel();
 
-  const handleResumeUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (file.type !== "text/plain") {
-        toast({
-          title: "Invalid file type",
-          description: "Please upload a .txt file.",
-          variant: "destructive",
-        });
-        return;
+  const handleResumeUpload = async (file: File) => {
+    if (file.type !== "text/plain" && file.type !== "application/pdf") {
+      toast({
+        title: "Invalid file type",
+        description: "Please upload a .txt or .pdf file.",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (file.size > 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "Please upload a file smaller than 1MB.",
+        variant: "destructive",
+      });
+      return;
+    }
+    try {
+      let text: string;
+      if (file.type === "application/pdf") {
+        text = await convertPdfToText(file);
+      } else {
+        text = await file.text();
       }
-
-      if (file.size > 1024 * 1024) {
-        toast({
-          title: "File too large",
-          description: "Please upload a file smaller than 1MB.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      try {
-        const text = await file.text();
-        setResumeText(text);
-        await analyzeResumeAndUpdateJobs(text);
-      } catch (error) {
-        console.error("Error processing resume:", error);
-        setError(
-          `Failed to process resume: ${error instanceof Error ? error.message : "Unknown error"}`,
-        );
-        setMessages((prev) => [
-          ...prev,
-          {
-            role: "assistant",
-            content:
-              "Sorry, I encountered an error processing your resume. Please try again.",
-          },
-        ]);
-      }
+      setResumeText(text);
+      await analyzeResumeAndUpdateJobs(text);
+    } catch (error) {
+      console.error("Error processing resume:", error);
+      setError(
+        `Failed to process resume: ${error instanceof Error ? error.message : "Unknown error"}`,
+      );
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content:
+            "Sorry, I encountered an error processing your resume. Please try again.",
+        },
+      ]);
     }
   };
-
   const analyzeResumeAndUpdateJobs = async (resumeText: string) => {
     if (!model) {
       setError(
@@ -180,10 +181,7 @@ const EnhancedJobSearch: React.FC = () => {
                 <CardTitle>Resume Chatbot</CardTitle>
               </CardHeader>
               <CardContent>
-                <ResumeUpload
-                  onUpload={handleResumeUpload}
-                  resumeText={resumeText}
-                />
+                <ResumeUpload onUpload={handleResumeUpload} />
                 <ChatInterface
                   messages={messages}
                   isLoading={isLoading}

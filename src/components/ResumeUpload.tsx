@@ -1,38 +1,19 @@
 import React, { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Upload } from "lucide-react";
-import { convertPdfToText } from "@/utils/pdfToText"; // Import the utility function
 
 interface ResumeUploadProps {
-  onUpload: (text: string) => void;
+  onUpload: (file: File) => void;
 }
 
 const ResumeUpload: React.FC<ResumeUploadProps> = ({ onUpload }) => {
   const [fileName, setFileName] = useState<string>("");
-  const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
-
-    setFileName(file.name);
-    setIsLoading(true);
-
-    try {
-      if (file.type === "application/pdf") {
-        const text = await convertPdfToText(file);
-        onUpload(text);
-      } else if (file.type === "text/plain") {
-        const text = await file.text();
-        onUpload(text);
-      } else {
-        alert("Please upload a PDF or TXT file.");
-      }
-    } catch (error) {
-      console.error("Error processing file:", error);
-      alert("An error occurred while processing the file. Please try again.");
-    } finally {
-      setIsLoading(false);
+    if (file) {
+      setFileName(file.name);
+      onUpload(file);
     }
   };
 
@@ -49,7 +30,7 @@ const ResumeUpload: React.FC<ResumeUploadProps> = ({ onUpload }) => {
           type="file"
           id="resume"
           accept=".pdf,.txt"
-          onChange={handleFileUpload}
+          onChange={handleFileChange}
           className="sr-only"
         />
         <label
@@ -60,7 +41,7 @@ const ResumeUpload: React.FC<ResumeUploadProps> = ({ onUpload }) => {
           Choose File
         </label>
         <span className="border border-gray-300 rounded-r px-4 py-2 w-full">
-          {isLoading ? "Processing..." : fileName || "No file chosen"}
+          {fileName || "No file chosen"}
         </span>
       </div>
     </div>
