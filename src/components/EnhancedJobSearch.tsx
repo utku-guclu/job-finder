@@ -13,7 +13,7 @@ import ChatInterface from "./ChatInterface";
 import ResumeUpload from "./ResumeUpload";
 import { Message } from "../types";
 
-import { convertPdfToText } from "@/utils/pdfToText"; // Make sure to import this
+import { pdfToText } from "@/utils/pdfToText"; // Make sure to import this
 
 const EnhancedJobSearch: React.FC = () => {
   // Chat-related state
@@ -45,7 +45,7 @@ const EnhancedJobSearch: React.FC = () => {
     try {
       let text: string;
       if (file.type === "application/pdf") {
-        text = await convertPdfToText(file);
+        text = await pdfToText(file);
       } else {
         text = await file.text();
       }
